@@ -41,9 +41,11 @@ class HymenopteraDataset(data.Dataset):
         # extract label from source-file
         ret_label = None
         if (self._phase == "train"):
-            ret_label = image_path[30:34]
+            # ret_label = image_path[30:34]
+            ret_label = image_path[84:88]
         elif (self._phase == "val"):
-            ret_label = image_path[28:32]
+            # ret_label = image_path[28:32]
+            ret_label = image_path[82:85]
 
         if (ret_label == "ants"):
             ret_label = 0
