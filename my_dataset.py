@@ -45,7 +45,7 @@ class HymenopteraDataset(data.Dataset):
             ret_label = image_path[84:88]
         elif (self._phase == "val"):
             # ret_label = image_path[28:32]
-            ret_label = image_path[82:85]
+            ret_label = image_path[82:86]
 
         if (ret_label == "ants"):
             ret_label = 0
