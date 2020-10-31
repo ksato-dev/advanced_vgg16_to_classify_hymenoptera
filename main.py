@@ -49,11 +49,19 @@ def train(train_data_loader, val_data_loader, criterion, optimizer, num_epochs, 
 
     for curr_epoch in tqdm(range(num_epochs)):
         
-        total_loss = 0.0
-        num_corrects = 0
-
         for phase in ["train", "val"]:
+
+            if (phase == "train"):
+                net.train()
+            elif (phase == "val"):
+                net.eval()
+
+            if (curr_epoch == 0 and phase == "train"):
+                continue
+
             curr_loader = loaders[phase]
+            total_loss = 0.0
+            num_corrects = 0
 
             print(phase, curr_loader)
 
@@ -63,10 +71,25 @@ def train(train_data_loader, val_data_loader, criterion, optimizer, num_epochs, 
                 with torch.set_grad_enabled(phase == "train"):
                     outputs = net(inputs)
                     curr_loss = criterion(outputs, labels)
-                    _, preds = torch.max(outputs, 1)  ## axis(row) = 1 に対する最大値
+                    _, preds = torch.max(outputs, 1)  ## axis(row) = 1 に対する最大値, 確率
 
-                    print("preds")
-                    print(preds)
+                    if (phase == "train"):
+                        curr_loss.backward()
+                        optimizer.step()
+
+                    total_loss += curr_loss.item() * inputs.size(0)
+                    num_corrects += torch.sum(preds == labels.data)
+
+                    # print("preds")
+                    # print(preds)
+                    # print("labels.data")
+                    # print(labels.data)
+                    # print("-------------")
+
+            total_loss = total_loss / len(loaders[phase].dataset)
+            total_acc = num_corrects.double() / len(loaders[phase].dataset)
+                
+            print("Phase:{}, Loss:{:.4f}, Acc:{:.4f}".format(phase, total_loss, total_acc))
                 
     pass
 
@@ -93,6 +116,8 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     vgg_net = models.vgg16(pretrained=True)
+    
+    vgg_net.classifier[6] = nn.Linear(in_features = 4096, out_features = 2)
 
     keys_to_change = ["classifier.6.weight", "classifier.6.bias"]
     params_to_update = MyUtils.get_specified_params_from_torch_net(vgg_net, keys_to_change)
@@ -108,5 +133,8 @@ if __name__ == "__main__":
     # print(train_ds)
     # print(train_ds.__getitem__(0))
     # print(train_ds.__getitem__(0)[0].size())
+
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
 
     main()
